@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 import 'package:zenon_syrius_wallet_flutter/blocs/notifications_bloc.dart';
@@ -51,9 +52,11 @@ class SendLargeCard extends StatefulWidget {
 class _SendLargeCardState extends State<SendLargeCard> {
   TextEditingController _recipientController = TextEditingController();
   TextEditingController _amountController = TextEditingController();
+  TextEditingController _dataController = TextEditingController();
 
   GlobalKey<FormState> _recipientKey = GlobalKey();
   GlobalKey<FormState> _amountKey = GlobalKey();
+  GlobalKey<FormState> _dataKey = GlobalKey();
 
   final GlobalKey<LoadingButtonState> _sendPaymentButtonKey = GlobalKey();
 
@@ -146,12 +149,46 @@ class _SendLargeCardState extends State<SendLargeCard> {
               ),
             ),
           ),
-          kVerticalSpacing,
+          const SizedBox(
+            height: 5.0,
+          ),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Expanded(
-                flex: 8,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 10.0),
+                  child: Text(
+                    'Send from',
+                    style: Theme.of(context).inputDecorationTheme.hintStyle,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 0,
+
+                child: AvailableBalance(
+                  _selectedToken,
+                  accountInfo,
+                  ),
+              ),
+              //),
+              const SizedBox(
+                width: 20.0,
+              ),
+            ],
+          ),
+          const SizedBox(
+            height: 5.0,
+          ),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _getDefaultAddressDropdown(),
+              ),
+              const SizedBox( width: 15),
+              Expanded(
+                flex: 1,
                 child: Container(
                   margin: const EdgeInsets.only(right: 20.0),
                   child: Form(
@@ -180,65 +217,79 @@ class _SendLargeCardState extends State<SendLargeCard> {
               ),
             ],
           ),
-          const SizedBox(
-            height: 5.0,
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 10.0),
-            child: Text(
-              'Send from',
-              style: Theme.of(context).inputDecorationTheme.hintStyle,
+          kVerticalSpacing,
+          Container(
+            margin: const EdgeInsets.only(right: 20.0),
+            child: Form(
+              key: _dataKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: InputField(
+                onChanged: (value) {
+                  setState(() {});
+                },
+                controller: _dataController,
+                suffixIcon: RawMaterialButton(
+                  child: const Icon(
+                    Icons.content_paste,
+                    color: AppColors.darkHintTextColor,
+                    size: 15.0,
+                  ),
+                  shape: const CircleBorder(),
+                  onPressed: () {
+                    ClipboardUtils.pasteToClipboard(context, (String value) {
+                      _dataController.text = value;
+                      setState(() {});
+                    });
+                  },
+                ),
+                suffixIconConstraints: const BoxConstraints(
+                  maxWidth: 45.0,
+                  maxHeight: 20.0,
+                ),
+                hintText: 'Message (optional)',
+              ),
             ),
           ),
-          const SizedBox(
-            height: 5.0,
-          ),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Expanded(
-                child: _getDefaultAddressDropdown(),
-              ),
-              Container(
-                width: 10.0,
-              ),
-              _getSendPaymentViewModel(accountInfo),
-              const SizedBox(
-                width: 20.0,
-              )
-            ],
-          ),
+          const SizedBox( height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(
-                  left: 10.0,
-                  top: 10.0,
-                ),
-                child: AvailableBalance(
-                  _selectedToken,
-                  accountInfo,
+            children: <Widget>[
+              Expanded(
+                flex: 1,
+                child: Container(
+                  height: 40,
+                  child: _getSendPaymentViewModel(accountInfo),
                 ),
               ),
-              Visibility(
-                visible: widget.extendIcon!,
+              Expanded(
+                flex: 0,
                 child: TransferToggleCardSizeButton(
                   onPressed: widget.onCollapsePressed,
                   iconData: Icons.navigate_before,
                 ),
-              )
+              ),
             ],
-          )
+          ),
         ],
       ),
     );
   }
 
   void _onSendPaymentPressed(SendPaymentBloc model) {
+    var _dialogText;
     if (_recipientKey.currentState!.validate() &&
         _amountKey.currentState!.validate()) {
+      if (_dataController.text.isNotEmpty) {
+        _dialogText = "Are you sure you want to transfer "
+            "${_amountController.text} ${_selectedToken.symbol} to "
+            "${AddressUtils.getLabel(_recipientController.text)} "
+            "with a message \"${_dataController.text}\" ?";
+      }
+      else {
+        _dialogText = "Are you sure you want to transfer "
+            "${_amountController.text} ${_selectedToken.symbol} to "
+            "{AddressUtils.getLabel(_recipientController.text)} ?";
+      }
       if (Address.parse(_recipientController.text) == bridgeAddress) {
         showOkDialog(
           context: context,
@@ -253,9 +304,7 @@ class _SendLargeCardState extends State<SendLargeCard> {
         showDialogWithNoAndYesOptions(
           context: context,
           title: 'Send Payment',
-          description: 'Are you sure you want to transfer '
-              '${_amountController.text} ${_selectedToken.symbol} to '
-              '${AddressUtils.getLabel(_recipientController.text)} ?',
+          description: _dialogText,
           onYesButtonPressed: () => _sendPayment(model),
         );
       }
@@ -289,7 +338,7 @@ class _SendLargeCardState extends State<SendLargeCard> {
       fromAddress: _selectedSelfAddress,
       toAddress: _recipientController.text,
       amount: _amountController.text,
-      data: null,
+      data: utf8.encode(_dataController.text),
       token: _selectedToken,
     );
   }
@@ -347,8 +396,10 @@ class _SendLargeCardState extends State<SendLargeCard> {
                 _sendPaymentButtonKey.currentState?.animateReverse();
                 _amountController = TextEditingController();
                 _recipientController = TextEditingController();
+                _dataController = TextEditingController();
                 _amountKey = GlobalKey();
                 _recipientKey = GlobalKey();
+                _dataKey = GlobalKey();
               });
             }
           },
@@ -422,6 +473,7 @@ class _SendLargeCardState extends State<SendLargeCard> {
   void dispose() {
     _recipientController.dispose();
     _amountController.dispose();
+    _dataController.dispose();
     super.dispose();
   }
 }

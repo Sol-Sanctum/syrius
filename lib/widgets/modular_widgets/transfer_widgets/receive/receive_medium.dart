@@ -159,10 +159,10 @@ class _ReceiveMediumCardState extends State<ReceiveMediumCard> {
               ],
             ),
             const SizedBox(
-              height: 35.0,
+              height: 45.0,
             ),
+            kVerticalSpacing,
             Row(
-              mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
                 TransferToggleCardSizeButton(
                   onPressed: widget.onExpandClicked,

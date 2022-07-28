@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:stacked/stacked.dart';
 import 'package:zenon_syrius_wallet_flutter/blocs/notifications_bloc.dart';
 import 'package:zenon_syrius_wallet_flutter/blocs/transfer/send_payment_bloc.dart';
@@ -45,15 +47,18 @@ class SendMediumCard extends StatefulWidget {
 class _SendMediumCardState extends State<SendMediumCard> {
   TextEditingController _recipientController = TextEditingController();
   TextEditingController _amountController = TextEditingController();
+  TextEditingController _dataController = TextEditingController();
 
   GlobalKey<FormState> _recipientKey = GlobalKey();
   GlobalKey<FormState> _amountKey = GlobalKey();
+  GlobalKey<FormState> _dataKey = GlobalKey();
 
   Token _selectedToken = kDualCoin.first;
 
   final List<Token?> _tokensWithBalance = [];
 
   final FocusNode _recipientFocusNode = FocusNode();
+  final FocusNode _dataFocusNode = FocusNode();
 
   final GlobalKey<LoadingButtonState> _sendPaymentButtonKey = GlobalKey();
 
@@ -168,28 +173,77 @@ class _SendMediumCardState extends State<SendMediumCard> {
             ),
           ),
           kVerticalSpacing,
-          Center(
-            child: Container(
-              child: _getSendPaymentViewModel(accountInfo),
+          Container(
+            margin: const EdgeInsets.only(right: 20.0),
+            child: Form(
+              key: _dataKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: InputField(
+                onChanged: (value) {
+                  setState(() {});
+                },
+                thisNode: _dataFocusNode,
+                controller: _dataController,
+                suffixIcon: RawMaterialButton(
+                  child: const Icon(
+                    Icons.content_paste,
+                    color: AppColors.darkHintTextColor,
+                    size: 15.0,
+                  ),
+                  shape: const CircleBorder(),
+                  onPressed: () {
+                    ClipboardUtils.pasteToClipboard(context, (String value) {
+                      _dataController.text = value;
+                      setState(() {});
+                    });
+                  },
+                ),
+                suffixIconConstraints: const BoxConstraints(
+                  maxWidth: 45.0,
+                  maxHeight: 20.0,
+                ),
+                hintText: 'Message (optional)',
+              ),
             ),
           ),
+          kVerticalSpacing,
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
-              TransferToggleCardSizeButton(
-                onPressed: widget.onExpandClicked,
-                iconData: Icons.navigate_next,
+              Expanded(
+                flex: 1,
+                child: Container(
+                  child: _getSendPaymentViewModel(accountInfo),
+                ),
+              ),
+              Expanded(
+                flex: 0,
+                child: TransferToggleCardSizeButton(
+                    onPressed: widget.onExpandClicked,
+                    iconData: Icons.navigate_next,
+                  ),
               ),
             ],
-          ),
+          )
         ],
       ),
     );
   }
 
   void _onSendPaymentPressed(SendPaymentBloc model) {
+    var _dialogText;
     if (_recipientKey.currentState!.validate() &&
         _amountKey.currentState!.validate()) {
+      if (_dataController.text.isNotEmpty) {
+        _dialogText = "Are you sure you want to transfer "
+            "${_amountController.text} ${_selectedToken.symbol} to "
+            "${AddressUtils.getLabel(_recipientController.text)} "
+            "with a message \"${_dataController.text}\" ?";
+      }
+      else {
+        _dialogText = "Are you sure you want to transfer "
+            "${_amountController.text} ${_selectedToken.symbol} to "
+            "{AddressUtils.getLabel(_recipientController.text)} ?";
+      }
       if (Address.parse(_recipientController.text) == bridgeAddress) {
         showOkDialog(
           context: context,
@@ -205,9 +259,7 @@ class _SendMediumCardState extends State<SendMediumCard> {
         showDialogWithNoAndYesOptions(
           context: context,
           title: 'Send Payment',
-          description: 'Are you sure you want to transfer '
-              '${_amountController.text} ${_selectedToken.symbol} to '
-              '${AddressUtils.getLabel(_recipientController.text)} ?',
+          description: _dialogText,
           onYesButtonPressed: () => _sendPayment(model),
         );
       }
@@ -221,7 +273,7 @@ class _SendMediumCardState extends State<SendMediumCard> {
       fromAddress: kSelectedAddress,
       toAddress: _recipientController.text,
       amount: _amountController.text,
-      data: null,
+      data: utf8.encode(_dataController.text),
       token: _selectedToken,
     );
   }
@@ -285,8 +337,10 @@ class _SendMediumCardState extends State<SendMediumCard> {
                 _sendPaymentButtonKey.currentState?.animateReverse();
                 _amountController = TextEditingController();
                 _recipientController = TextEditingController();
+                _dataController = TextEditingController();
                 _amountKey = GlobalKey();
                 _recipientKey = GlobalKey();
+                _dataKey = GlobalKey();
               });
             }
           },
@@ -358,6 +412,7 @@ class _SendMediumCardState extends State<SendMediumCard> {
   void dispose() {
     _recipientController.dispose();
     _amountController.dispose();
+    _dataController.dispose();
     super.dispose();
   }
 }
