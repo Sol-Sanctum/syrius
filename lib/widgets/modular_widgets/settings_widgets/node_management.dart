@@ -1,4 +1,5 @@
 import 'dart:isolate';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
@@ -97,9 +98,12 @@ class _NodeManagementState extends State<NodeManagement> {
   }
 
   Future<void> _onConfirmNodeButtonPressed() async {
-    // Acquire WakeLock
-    if (!await Wakelock.enabled) {
-      Wakelock.enable();
+    // Patch for https://github.com/zenon-network/syrius/issues/4
+    if (!Platform.isLinux) {
+      // Acquire WakeLock
+      if (!await Wakelock.enabled) {
+        Wakelock.enable();
+      }
     }
 
     try {

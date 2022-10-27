@@ -27,9 +27,12 @@ class NodeUtils {
   }
 
   static closeEmbeddedNode() async {
-    // Release WakeLock
-    if (await Wakelock.enabled) {
-      Wakelock.disable();
+    // Patch for https://github.com/zenon-network/syrius/issues/4
+    if (!Platform.isLinux) {
+      // Release WakeLock
+      if (await Wakelock.enabled) {
+        Wakelock.disable();
+      }
     }
 
     if (kCurrentNode == kLocalhostDefaultNodeUrl ||
@@ -183,10 +186,14 @@ class NodeUtils {
       bool _isConnectionEstablished =
           await NodeUtils.establishConnectionToNode(kLocalhostDefaultNodeUrl);
       if (_isConnectionEstablished == false) {
-        // Acquire WakeLock
-        if (!await Wakelock.enabled) {
-          Wakelock.enable();
+        // Patch for https://github.com/zenon-network/syrius/issues/4
+        if (!Platform.isLinux) {
+          // Acquire WakeLock
+          if (!await Wakelock.enabled) {
+            Wakelock.enable();
+          }
         }
+
         // Initialize local full node
         await Isolate.spawn(EmbeddedNode.runNode, [''],
             onExit:
