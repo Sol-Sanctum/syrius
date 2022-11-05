@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 project(syrius LANGUAGES CXX)
 
 set(BINARY_NAME "syrius")
+set(APPLICATION_ID "network.zenon.syrius")
 
 cmake_policy(SET CMP0063 NEW)
 
@@ -107,6 +108,7 @@ string(STRIP "${ZNN_SDK_DART_PATH}" ZNN_SDK_DART_PATH)
 
 list(APPEND SYRIUS_LIBRARIES
   "${SYRIUS_PROJECT_DIRECTORY}/lib/embedded_node/blobs/libznn.dll"
+  "${SYRIUS_PROJECT_DIRECTORY}/lib/swap/libExportWallet.dll"
   "${ZNN_SDK_DART_PATH}/lib/src/argon2/blobs/argon2_ffi_plugin.dll"
   "${ZNN_SDK_DART_PATH}/lib/src/pow/blobs/libpow_links.dll"
 )
