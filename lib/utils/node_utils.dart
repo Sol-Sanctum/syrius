@@ -20,10 +20,23 @@ int _kHeight = 0;
 
 class NodeUtils {
   static Future<bool> establishConnectionToNode(String url) async {
-    return await zenon!.wsClient.initialize(
+    var connectionStatus = await zenon!.wsClient.initialize(
       url,
       retry: false,
     );
+
+    if (connectionStatus) {
+      try {
+        await zenon!.ledger.getFrontierMomentum().then((value) {
+          netId = value.chainIdentifier.toInt();
+        });
+      }
+      catch (e) {
+        throw (e);
+      }
+    }
+
+    return connectionStatus;
   }
 
   static closeEmbeddedNode() async {
