@@ -478,14 +478,14 @@ class _SendLargeCardState extends State<SendLargeCard> {
 
   bool _isInputValid(AccountInfo accountInfo) =>
       InputValidators.checkAddress(_recipientController.text) == null &&
-          InputValidators.correctValue(
-            _amountController.text,
-            accountInfo.getBalanceWithDecimals(
-              _selectedToken.tokenStandard,
-            ),
-            _selectedToken.decimals,
-          ) == null &&
-          InputValidators.checkDataLength(_dataController.text) == null;
+      InputValidators.correctValue(
+        _amountController.text,
+        accountInfo.getBalanceWithDecimals(
+          _selectedToken.tokenStandard,
+        ),
+        _selectedToken.decimals,
+      ) == null &&
+      InputValidators.checkDataLength(_dataController.text) == null;
 
   @override
   void dispose() {
