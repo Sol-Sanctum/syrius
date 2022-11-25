@@ -188,6 +188,15 @@ const Duration kDelayAfterAccountBlockCreationCall = Duration(
 const Duration kProjectVotingPeriod = Duration(days: 14);
 const Duration kEmbeddedConnectionDelay = Duration(seconds: 30);
 
+// Plasma constants
+const AccountBlockBasePlasma  = 21000;
+const ABByteDataPlasma        = 68;
+const EmbeddedSimplePlasma    = 2.5 * AccountBlockBasePlasma;
+const EmbeddedWResponse       = 3.5 * AccountBlockBasePlasma;
+const EmbeddedWDoubleResponse = 4.5 * AccountBlockBasePlasma;
+const MaxPoWPlasmaForAccountBlock  = EmbeddedWDoubleResponse;
+const MaxDataLength = 1024 * 16; // limits account-block data to 16Kb
+
 // Tabs
 const List<Tabs> kTabsWithTextTitles = [
   Tabs.dashboard,

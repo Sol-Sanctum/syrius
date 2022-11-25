@@ -2,6 +2,7 @@ import 'package:validators/validators.dart';
 import 'package:zenon_syrius_wallet_flutter/utils/constants.dart';
 import 'package:zenon_syrius_wallet_flutter/utils/global.dart';
 import 'package:zenon_syrius_wallet_flutter/utils/logger.dart';
+import 'package:zenon_syrius_wallet_flutter/main.dart';
 import 'package:znn_sdk_dart/znn_sdk_dart.dart';
 
 class InputValidators {
@@ -179,4 +180,27 @@ class InputValidators {
     }
     return 'Invalid URL';
   }
+
+  static String? checkDataLength(String? data) {
+    if (data == null || data.length <= MaxDataLength) {
+      return null;
+    }
+    return 'Message is too large';
+  }
+
+  Future<bool> checkPlasma(Address fromAddress, List<int> data) async {
+    var responsePlasmaForAddress = await zenon!.embedded.plasma.get(fromAddress);
+    var availablePlasma = responsePlasmaForAddress.currentPlasma;
+
+    //Plasma cost for a transaction
+    var basePlasma = (data.length * ABByteDataPlasma) + AccountBlockBasePlasma;
+
+    if (basePlasma <= availablePlasma)
+      return true;
+    else if (basePlasma <= (availablePlasma + MaxPoWPlasmaForAccountBlock))
+      return true;
+    else
+      return false;
+  }
+
 }

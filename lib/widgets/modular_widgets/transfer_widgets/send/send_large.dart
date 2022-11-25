@@ -227,6 +227,7 @@ class _SendLargeCardState extends State<SendLargeCard> {
                 onChanged: (value) {
                   setState(() {});
                 },
+                validator: (value) => InputValidators.checkDataLength(value),
                 controller: _dataController,
                 suffixIcon: RawMaterialButton(
                   child: const Icon(
@@ -275,38 +276,50 @@ class _SendLargeCardState extends State<SendLargeCard> {
     );
   }
 
-  void _onSendPaymentPressed(SendPaymentBloc model) {
-    var _dialogText;
-    if (_recipientKey.currentState!.validate() &&
-        _amountKey.currentState!.validate()) {
-      if (_dataController.text.isNotEmpty) {
-        _dialogText = "Are you sure you want to transfer "
-            "${_amountController.text} ${_selectedToken.symbol} to "
-            "${AddressUtils.getLabel(_recipientController.text)} "
-            "with a message \"${_dataController.text}\" ?";
-      }
-      else {
-        _dialogText = "Are you sure you want to transfer "
-            "${_amountController.text} ${_selectedToken.symbol} to "
-            "{AddressUtils.getLabel(_recipientController.text)} ?";
-      }
-      if (Address.parse(_recipientController.text) == bridgeAddress) {
-        showOkDialog(
-          context: context,
-          title: 'Send Payment',
-          description: 'Use the form from the \'Bridge\' tab to swap coins',
-          onActionButtonPressed: () {
-            Navigator.pop(context);
-            widget.onOkBridgeWarningDialogPressed();
-          },
-        );
-      } else {
-        showDialogWithNoAndYesOptions(
-          context: context,
-          title: 'Send Payment',
-          description: _dialogText,
-          onYesButtonPressed: () => _sendPayment(model),
-        );
+  Future<void> _onSendPaymentPressed(
+      SendPaymentBloc model,
+      Address fromAddress,
+      List<int> data
+      ) async
+  {
+    var inputValidatorsInstance = InputValidators();
+    if (!await inputValidatorsInstance.checkPlasma(fromAddress, data)) {
+      _sendErrorNotification(
+          "syrius error: transaction data exceeded PoW Plasma limit", true);
+    }
+    else {
+      var _dialogText;
+      if (_recipientKey.currentState!.validate() &&
+          _amountKey.currentState!.validate()) {
+        if (_dataController.text.isNotEmpty) {
+          _dialogText = "Are you sure you want to transfer "
+              "${_amountController.text} ${_selectedToken.symbol} to "
+              "${AddressUtils.getLabel(_recipientController.text)} "
+              "with a message \"${_dataController.text}\" ?";
+        }
+        else {
+          _dialogText = "Are you sure you want to transfer "
+              "${_amountController.text} ${_selectedToken.symbol} to "
+              "${AddressUtils.getLabel(_recipientController.text)} ?";
+        }
+        if (Address.parse(_recipientController.text) == bridgeAddress) {
+          showOkDialog(
+            context: context,
+            title: 'Send Payment',
+            description: 'Use the form from the \'Bridge\' tab to swap coins',
+            onActionButtonPressed: () {
+              Navigator.pop(context);
+              widget.onOkBridgeWarningDialogPressed();
+            },
+          );
+        } else {
+          showDialogWithNoAndYesOptions(
+            context: context,
+            title: 'Send Payment',
+            description: _dialogText,
+            onYesButtonPressed: () => _sendPayment(model),
+          );
+        }
       }
     }
   }
@@ -411,7 +424,10 @@ class _SendLargeCardState extends State<SendLargeCard> {
       },
       builder: (_, model, __) => SendPaymentButton(
         onPressed: _hasBalance(accountInfo!) && _isInputValid(accountInfo)
-            ? () => _onSendPaymentPressed(model)
+            ? () => _onSendPaymentPressed(
+                      model,
+                      Address.parse(kSelectedAddress!),
+                      utf8.encode(_dataController.text))
             : null,
         minimumSize: const Size(50.0, 48.0),
         key: _sendPaymentButtonKey,
@@ -420,12 +436,14 @@ class _SendLargeCardState extends State<SendLargeCard> {
     );
   }
 
-  void _sendErrorNotification(error) {
+  void _sendErrorNotification(error, [displayInNotification]) {
+    var displayedMessage = 'Couldn\'t send ${_amountController.text} '
+        '${_selectedToken.symbol} to ${_recipientController.text}';
+    if (displayInNotification) {
+      displayedMessage += ': ${error}';
+    }
     NotificationUtils.sendNotificationError(
-      error,
-      'Couldn\'t send ${_amountController.text} '
-      '${_selectedToken.symbol} '
-      'to ${_recipientController.text}',
+        error, displayedMessage
     );
   }
 
@@ -460,14 +478,14 @@ class _SendLargeCardState extends State<SendLargeCard> {
 
   bool _isInputValid(AccountInfo accountInfo) =>
       InputValidators.checkAddress(_recipientController.text) == null &&
-      InputValidators.correctValue(
+          InputValidators.correctValue(
             _amountController.text,
             accountInfo.getBalanceWithDecimals(
               _selectedToken.tokenStandard,
             ),
             _selectedToken.decimals,
-          ) ==
-          null;
+          ) == null &&
+          InputValidators.checkDataLength(_dataController.text) == null;
 
   @override
   void dispose() {
