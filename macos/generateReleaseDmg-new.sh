@@ -27,13 +27,15 @@ app_name="s y r i u s.app"
 volume_name="syrius"
 volume_format="UDBZ"
 volume_icon="${resource_dir}/VolumeIcon.icns"
-syrius_icon_coordinates=('145' '168')
-appdrop_icon_coordinates=('355' '168')
-icon_size="32"
-background_image="${resource_dir}/backgroundImage.tiff"
+syrius_icon_coordinates=('342' '435')
+appdrop_icon_coordinates=('765' '435')
+icon_size="112"
+text_size="16"
+window_size=('1110' '930')
+background_image="${resource_dir}/backgroundImage.png"
 version="$(cat "../pubspec.yaml" | grep version | sed 's/version://' | xargs)-alphanet"
 arch=$(uname -m)
-dmg_file_name="${output_dir}/${volume_name}-${version}-macos-${arch}.dmg"
+dmg_file_name="${output_dir}/${volume_name}-${version}-macos-${arch}-newBG.dmg"
 
 options=( 
   "--volname"        "${volume_name}"
@@ -41,7 +43,9 @@ options=(
   "--icon"           "${app_name}"
                      "${syrius_icon_coordinates[@]}"
   "--icon-size"      "${icon_size}"
+  "--text-size"      "${text_size}"
   "--background"     "${background_image}"
+  "--window-size"    "${window_size[@]}"
   "--hide-extension" "${app_name}"
   "--app-drop-link"  "${appdrop_icon_coordinates[@]}"
   "--format"         "${volume_format}"
