@@ -17,7 +17,6 @@
 
 
 # Variables
-#version="0.0.5-alphanet"
 version="$(cat "../pubspec.yaml" | grep version | sed 's/version://' | xargs)-alphanet"
 arch=$(uname -m)
 
