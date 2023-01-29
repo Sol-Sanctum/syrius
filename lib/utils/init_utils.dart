@@ -10,21 +10,32 @@ import 'package:zenon_syrius_wallet_flutter/utils/global.dart';
 import 'package:zenon_syrius_wallet_flutter/utils/keystore_utils.dart';
 import 'package:zenon_syrius_wallet_flutter/utils/node_utils.dart';
 import 'package:zenon_syrius_wallet_flutter/utils/widget_utils.dart';
+import 'package:znn_sdk_dart/znn_sdk_dart.dart';
 
 class InitUtils {
   static Future<void> initApp(BuildContext context) async {
     try {
-      await KeyStoreUtils.setKeyStorePath();
-      await _setNumUnlockFailedAttempts();
-      await NodeUtils.setNode();
-      await NodeUtils.loadDbNodes();
       WidgetUtils.setThemeMode(context);
       WidgetUtils.setTextScale(context);
       _setAutoEraseWalletNumAttempts();
       _setAutoLockWalletTimeInterval();
+      await KeyStoreUtils.setKeyStorePath();
+      await _setNumUnlockFailedAttempts();
+      await NodeUtils.setNode();
+      _setChainId();
+      await NodeUtils.loadDbNodes();
     } catch (e) {
       rethrow;
     }
+  }
+
+  static void _setChainId() {
+    setChainIdentifier(
+      chainIdentifier: sharedPrefsService!.get(
+        kChainIdKey,
+        defaultValue: kChainIdDefaultValue,
+      ),
+    );
   }
 
   static Future<void> _setNumUnlockFailedAttempts() async {
