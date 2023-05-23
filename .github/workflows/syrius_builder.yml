@@ -12,48 +12,6 @@ env:
   FLUTTER_VERSION: "3.7.x"
 
 jobs:
-  build-macos:
-    runs-on: macos-12
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup environment
-        run: |
-          brew install unzip create-dmg
-          brew cleanup
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{env.FLUTTER_VERSION}}
-          channel: "stable"
-      - name: Check flutter version
-        run: flutter --version
-      - name: Build syrius desktop 
-        run: |
-          flutter config --enable-macos-desktop
-          flutter build macos --release
-      - name: Package into DMG
-        run: |
-          create-dmg --volname syrius \
-          --volicon macos/dmg/volume.icns \
-          --icon "s\ y\ r\ i\ u\ s.app" 210 175 \
-          --icon-size 90 \
-          --app-drop-link 390 175 \
-          --text-size 14 \
-          --background macos/dmg/background.png \
-          --window-pos 300 200 \
-          --window-size 600 325 \
-          --hide-extension "s\ y\ r\ i\ u\ s.app" \
-          --format ULFO \
-          --hdiutil-verbose syrius-alphanet-macos-universal.dmg build/macos/Build/Products/Release/s\ y\ r\ i\ u\ s.app \
-          syrius-alphanet-macos-universal.dmg build/macos/Build/Products/Release/s\ y\ r\ i\ u\ s.app
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: macos-artifacts
-          path: syrius-alphanet-macos-universal.dmg
   build-windows:
     runs-on: windows-latest
     steps:
@@ -69,46 +27,17 @@ jobs:
       - name: Build syrius desktop
         run: |
           flutter config --enable-windows-desktop
-          flutter build windows --release   
+          flutter build windows --debug
       - name: Package into zip
         run: |
-          Compress-Archive -Path build\windows\runner\Release\* -DestinationPath .\syrius-alphanet-windows-amd64.zip
+          Compress-Archive -Path build\windows\runner\Debug\* -DestinationPath .\syrius-alphanet-windows-amd64-debug.zip
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: windows-artifacts
-          path: syrius-alphanet-windows-amd64.zip
-  build-linux:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Prepare environment
-        run: |
-          sudo apt update
-          sudo apt install -y curl clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev unzip xz-utils zip libnotify-dev libayatana-appindicator3-dev
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{env.FLUTTER_VERSION}}
-          channel: "stable"
-      - name: Check flutter version
-        run: flutter --version
-      - name: Build syrius desktop
-        run: |
-          flutter config --enable-linux-desktop
-          flutter build linux --release
-      - name: Package zip
-        run: |
-          cd build/linux/x64/release/bundle
-          zip -r ../../../../../syrius-alphanet-linux-amd64.zip *
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: linux-artifacts
-          path: syrius-alphanet-linux-amd64.zip
+          path: syrius-alphanet-windows-amd64-debug.zip
   make-release:
-    needs: [build-macos, build-windows, build-linux]
+    needs: [build-windows]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
@@ -140,23 +69,13 @@ jobs:
           echo "EOFMARKER" >> ${GITHUB_ENV}
       - name: Prepare releases directory
         run: mkdir releases
-      - name: Download macOS artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: macos-artifacts
       - name: Download Windows artifacts
         uses: actions/download-artifact@v3
         with:
           name: windows-artifacts
-      - name: Download Linux artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: linux-artifacts
       - name: Prepare releases
         run: |
-          cp syrius-alphanet-windows-amd64.zip releases/
-          cp syrius-alphanet-macos-universal.dmg releases/
-          cp syrius-alphanet-linux-amd64.zip releases/
+          cp syrius-alphanet-windows-amd64-debug.zip releases/
       - name: Generate checksums
         run: |
           cd releases/
