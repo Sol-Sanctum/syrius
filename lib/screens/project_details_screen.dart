@@ -67,7 +67,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     return StandardFluidLayout(
       children: [
         FluidCell(
-          width: project.owner.toString() == kSelectedAddress!
+          width: kDefaultAddressList.contains(project.owner.toString())
               ? context.layout.value(
                   xl: kStaggeredNumOfColumns ~/ 2,
                   lg: kStaggeredNumOfColumns ~/ 2,
@@ -78,7 +78,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               : kStaggeredNumOfColumns,
           child: ProjectsStats(project),
         ),
-        if (project.owner.toString() == kSelectedAddress!)
+        if (kDefaultAddressList.contains(project.owner.toString()))
           FluidCell(
             width: context.layout.value(
               xl: kStaggeredNumOfColumns ~/ 2,

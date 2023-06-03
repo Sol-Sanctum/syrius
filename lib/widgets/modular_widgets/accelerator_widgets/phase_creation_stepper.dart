@@ -434,6 +434,7 @@ class _PhaseCreationStepperState extends State<PhaseCreationStepper> {
           _phaseQsrAmountController.text.toNum().extractDecimals(
                 qsrDecimals,
               ),
+          widget.project.owner,
         );
       },
       text: 'Submit',
