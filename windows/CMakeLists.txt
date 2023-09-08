@@ -100,11 +100,16 @@ set(SYRIUS_PROJECT_DIRECTORY "${CMAKE_HOME_DIRECTORY}/..")
 
 # Leveraging flutter to identify dependency locations
 file(STRINGS "${SYRIUS_PROJECT_DIRECTORY}/.dart_tool/package_config.json"
-  ZNN_SDK_DART_PATH REGEX "(file:).*(znn_sdk_dart).*\\/\"" )
+  ZNN_SDK_DART_PATH REGEX "(rootUri).*(znn_sdk_dart).*(\/|)\"," )
 message(ZNN_SDK_DART_PATH="${ZNN_SDK_DART_PATH}")
 
-string(REPLACE "\"rootUri\": \"file:///" "" ZNN_SDK_DART_PATH "${ZNN_SDK_DART_PATH}")
+string(REPLACE "\"rootUri\": \"" "" ZNN_SDK_DART_PATH "${ZNN_SDK_DART_PATH}")
+message(ZNN_SDK_DART_PATH="${ZNN_SDK_DART_PATH}")
+
+string(REPLACE "file:\/\/\/" "" ZNN_SDK_DART_PATH "${ZNN_SDK_DART_PATH}")
 string(REPLACE "/\"," "" ZNN_SDK_DART_PATH "${ZNN_SDK_DART_PATH}")
+string(REPLACE "\"," "" ZNN_SDK_DART_PATH "${ZNN_SDK_DART_PATH}")
+
 string(STRIP "${ZNN_SDK_DART_PATH}" ZNN_SDK_DART_PATH)
 message(ZNN_SDK_DART_PATH="${ZNN_SDK_DART_PATH}")
 
